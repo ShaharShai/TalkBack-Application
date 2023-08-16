@@ -1,7 +1,10 @@
+require('dotenv').config()
+
 const express = require("express");
-const app = express();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+const app = express();
 
 app.use(express.json());
 
@@ -12,7 +15,25 @@ const users = [
   },
 ];
 
-app.get("/users", (req, res) => {
+const authenticateToken = async (req, res, next) => {
+    if(req.headers.authorization){
+        const token = req.headers.authorization
+        if(token){
+         const payload = await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+         console.log(payload)
+         next()
+        }
+        else{
+            return res.status(401).send('Authentication Error')
+        }
+    }
+    else{
+        return res.status(401).send('Authentication Error')
+    }
+    
+    }
+
+app.get("/users", authenticateToken, (req, res) => {
   res.json(users);
 });
 
@@ -34,7 +55,8 @@ app.post("/users/login", async (req, res) => {
   }
   try {
     if (await bcrypt.compare(req.body.password, user.password)) {
-      res.send(`${user.username} Conncted`);
+      const accessToken = jwt.sign(user.username, process.env.ACCESS_TOKEN_SECRET)
+      res.json({ accessToken: accessToken })
     } else {
       res.send("Not Authenticated");
     }
@@ -42,5 +64,7 @@ app.post("/users/login", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+
+
 
 app.listen(1000);
