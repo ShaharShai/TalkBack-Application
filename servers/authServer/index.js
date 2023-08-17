@@ -4,6 +4,11 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
+const mongoose = require("mongoose");
+const account = require("./models/Account")
+
+const dbUrl = "mongodb://127.0.0.1:27017"
+
 
 const app = express();
 
@@ -44,6 +49,7 @@ app.post("/users", async (req, res) => {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = { username: req.body.username, password: hashedPassword };
     users.push(user);
+    
     res.status(201).send();
   } catch {
     res.status(500).send();
@@ -70,5 +76,10 @@ app.post("/users/login", async (req, res) => {
 });
 
 
-
+mongoose.connect(dbUrl)
+.then(() => {
+    console.log("Connecting to Database")
 app.listen(1000);
+    
+})
+
