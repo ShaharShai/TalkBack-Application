@@ -5,9 +5,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const account = require("./models/Account")
+const Account = require('./models/Account');
 
-const dbUrl = "mongodb://127.0.0.1:27017"
+const dbUrl = "mongodb://127.0.0.1:27017/TalkBack"
 
 
 const app = express();
@@ -40,38 +40,44 @@ const authenticateToken = async (req, res, next) => {
     
     }
 
-app.get("/users", authenticateToken, (req, res) => {
-  res.json(users);
+app.get("/users", authenticateToken, async (req, res) => {
+  const users = await Account.find()
+  res.send(users)
+  
 });
 
 app.post("/users", async (req, res) => {
-  try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    const user = { username: req.body.username, password: hashedPassword };
-    users.push(user);
-    
-    res.status(201).send();
-  } catch {
-    res.status(500).send();
+    bcrypt.hash(req.body.password, 10).then(async (hashedPassword) => {
+    const account = new Account({ username: req.body.username, password: hashedPassword });
+    try{
+        await account.save();
+        res.send(account)
+    }
+     catch(err) {
+    res.status(500);
+    res.send(err);
   }
 });
+})
+
 
 app.post("/users/login", async (req, res) => {
-  const user = await users.find((user) => user.username === req.body.username);
-  if (user == null) {
-    return res.status(400).send("Can not find user");
-  }
-  try {
-    if (await bcrypt.compare(req.body.password, user.password)) {
-      const accessToken = jwt.sign(user.username, process.env.ACCESS_TOKEN_SECRET)
-      res.json({ accessToken: accessToken })
-    } else {
-        res.status(401);
-        res.send("Authentication failed: Incorrect password")
-    }
-  } catch (err) {
-    res.status(500);
+  const account = await Account.findOne({username: req.body.username});
+  if (account) {
+    bcrypt.compare(req.body.password, account.password).then((result) => {
+        if(result) {
+           const token = jwt.sign(account.username, process.env.ACCESS_TOKEN_SECRET)
+            res.send({ accessToken: token, username: account.username });
+        }else {
+            res.status(400);
+            res.send("Inccorect Username or Password !");
+            res.end();
+          }
+    })
+  }else{
+    res.status(404);
     res.send("User Does not Exist !");
+    res.end();
   }
 });
 
