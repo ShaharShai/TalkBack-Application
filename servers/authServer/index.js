@@ -3,15 +3,17 @@ require('dotenv').config()
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const cors = require("cors");
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 const users = [
   {
     username: "Kyle",
-    password: 1234,
+    password: "1234",
   },
 ];
 
@@ -58,10 +60,12 @@ app.post("/users/login", async (req, res) => {
       const accessToken = jwt.sign(user.username, process.env.ACCESS_TOKEN_SECRET)
       res.json({ accessToken: accessToken })
     } else {
-      res.send("Not Authenticated");
+        res.status(401);
+        res.send("Authentication failed: Incorrect password")
     }
   } catch (err) {
-    res.status(500).send(err.message);
+    res.status(500);
+    res.send("User Does not Exist !");
   }
 });
 
