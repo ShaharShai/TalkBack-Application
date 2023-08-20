@@ -7,10 +7,19 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const Account = require('./models/Account');
 
+const http = require('http');
+const io = require('socket.io')
+
 const dbUrl = "mongodb://127.0.0.1:27017/TalkBack"
 
-
 const app = express();
+const httpServer = http.createServer(app);
+
+const ioServer = io(httpServer, {
+    cors: {
+      origin: "http://localhost:5175",
+    },
+})
 
 app.use(express.json());
 app.use(cors());
@@ -21,6 +30,14 @@ const users = [
     password: "1234",
   },
 ];
+
+ioServer.on("connection", (socket) => {
+    console.log(`user ${socket.id} connected`);
+
+    socket.on("sendMessage", (message) => {
+        console.log(message)
+    })
+})
 
 const authenticateToken = async (req, res, next) => {
     if(req.headers.authorization){
@@ -85,7 +102,7 @@ app.post("/users/login", async (req, res) => {
 mongoose.connect(dbUrl)
 .then(() => {
     console.log("Connecting to Database")
-app.listen(1000);
+httpServer.listen(1000);
     
 })
 
