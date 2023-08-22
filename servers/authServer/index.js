@@ -18,9 +18,11 @@ const httpServer = http.createServer(app);
 
 const ioServer = io(httpServer, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: ["http://localhost:5173", "http://localhost:2000"]
     },
 })
+
+
 
 app.use(express.json());
 app.use(cors());
@@ -28,31 +30,42 @@ app.use(cors());
 const accountRoute = require("./routes/accountRoute")
 app.use("/users", accountRoute)
 
-const activeUsers = {};
+// const activeUsers = {};
+
 
 ioServer.on("connection", (socket) => {
-    console.log(`user ${socket.id} connected`);
-
-    const sockets = ioServer.fetchSockets();
+    console.log(`${socket.id} is connected`);
     
+
     socket.on("userConnected", (username) => {
-      activeUsers[socket.id] = username;
-      console.log(`${username} is now online`);
-      ioServer.emit("updateActiveUsers", Object.values(activeUsers)); 
-  });
-
-  socket.on("disconnect", () => {
-    const username = activeUsers[socket.id];
-    if (username) {
-        console.log(`${username} disconnected`);
-        delete activeUsers[socket.id];
-        ioServer.emit("updateActiveUsers", Object.values(activeUsers));
-    }
-});
-
-    socket.on("sendMessage", (message) => {
-        console.log(message)
+        console.log(`${username} is now online`);
+        ioServer.emit("userConnected", username, socket.id);
     })
+
+    socket.on("disconnect", () => {
+            console.log(`disconnected`)
+            ioServer.emit("userDisconnected", socket.id);
+        }
+    );
+    
+    // socket.on("userConnectedToAuthService", (username) => {
+    //     console.log(`Received userConnectedToAuthService event: ${username}`);
+    //     console.log(`${username} is connected`);
+    // });
+
+
+//   socket.on("disconnect", () => {
+//     const username = activeUsers[socket.id];
+//     if (username) {
+//         console.log(`${username} disconnected`);
+//         delete activeUsers[socket.id];
+//         ioServer.emit("updateActiveUsers", Object.values(activeUsers));
+//     }
+// });
+
+    // socket.on("sendMessage", (message) => {
+    //     console.log(message)
+    // })
 })
 
 const authenticateToken = async (req, res, next) => {

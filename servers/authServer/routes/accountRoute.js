@@ -8,6 +8,10 @@ const Account = require("../models/Account")
 
 const router = express.Router();
 
+router.get("/", async (req, res) => {
+  const users = await Account.find()
+  res.send(users)
+});
 
 router.post("/", async (req, res) => {
     bcrypt.hash(req.body.password, 10).then(async (hashedPassword) => {
