@@ -35,12 +35,8 @@ ioServer.on("connection", (socket) => {
             activeUsers[id] = username;
             ioServer.emit("updateActiveUsers", Object.values(activeUsers)); 
         }
-
      })
 
-
-  
-      
      authSocket.on("userDisconnected", (id) => {
         const username = activeUsers[id]
         if(username) {
@@ -50,23 +46,46 @@ ioServer.on("connection", (socket) => {
         }
      })
 
-    // authSocket.on("userConnectedToAuthService", (token, username) => {
-    //     if (!activeUsers[token] && !Object.values(activeUsers).includes(username)) {
-    //         activeUsers[token] = username;
+     socket.on("userDisconnectedButton", (username) => {
+        const idToRemove = Object.keys(activeUsers).find(id => activeUsers[id] === username);
+        console.log(idToRemove)
+        if (idToRemove) {
+            console.log(`${username} disconnected`);
+            delete activeUsers[idToRemove];
+            ioServer.emit("updateActiveUsers", Object.values(activeUsers));
+        } else {
+            console.log(`User ${username} not found in activeUsers`);
+        }
+    });
+
+
+     
+    //  authSocket.on("userConnected", (username, id) => {  
+    //     console.log(`${username} is now online`);
+    
+    //     if (!activeUsers[id] && !Object.values(activeUsers).includes(username)) {
+    //         activeUsers[id] = {username: username, status: "online"};
     //         ioServer.emit("updateActiveUsers", Object.values(activeUsers)); 
     //     }
-    // })
-     
 
+    //     if (Object.values(activeUsers).includes(username)) {
+    //         const index = activeUsers.indexOf(username);
+    //         activeUsers[index] = {username: username, status: "online"};
+    //         ioServer.emit("updateActiveUsers", Object.values(activeUsers)); 
+    //     }
+    //  })
 
-    // authSocket.on("userDisconnected", (id) => {
-    //     const username = activeUsers[id];
-    //     if (username) {
+    //  authSocket.on("userDisconnected", (id) => {
+    //     const username = activeUsers[id]
+    //     if(username) {
     //         console.log(`${username} disconnected`);
-    //         delete activeUsers[id];
+    //         // delete activeUsers[id];
+    //         activeUsers[id] = {...activeUsers[id], status: "offline"};
     //         ioServer.emit("updateActiveUsers", Object.values(activeUsers));
     //     }
-    // });
+    //  })
+
+  
 })
 
 app.get('/users', async (req, res) => {

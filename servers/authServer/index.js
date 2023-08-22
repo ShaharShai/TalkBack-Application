@@ -37,6 +37,10 @@ ioServer.on("connection", (socket) => {
     console.log(`${socket.id} is connected`);
     
 
+    socket.on("userRegistered", (username) => {
+        
+    })
+
     socket.on("userConnected", (username) => {
         console.log(`${username} is now online`);
         ioServer.emit("userConnected", username, socket.id);
